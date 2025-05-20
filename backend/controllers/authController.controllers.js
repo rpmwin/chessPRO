@@ -8,6 +8,7 @@ import {
 } from "../utils/jwt.js";
 import googleClient from "../config/googleClient.js";
 import mongoose from "mongoose";
+import { OAuth2Client } from "google-auth-library";
 
 export const COOKIE_OPTIONS = {
     httpOnly: true,
@@ -18,6 +19,7 @@ export const COOKIE_OPTIONS = {
 
 export const signup = async (req, res, next) => {
     try {
+        console.log(process.env.PORT);
         const { email, password, name } = req.body;
 
         if (!name || !email || !password) {
@@ -40,7 +42,7 @@ export const signup = async (req, res, next) => {
         });
 
         const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(Token);
+        const refreshToken = generateRefreshToken(user);
 
         res.cookie("jid", refreshToken, COOKIE_OPTIONS).json({
             user,
@@ -89,42 +91,55 @@ export const login = async (req, res, next) => {
 // google oauth redirect
 
 export const googleRedirect = (req, res) => {
-    const url = googleClient.generateAuthUrl({
+    const oauth2Client = new OAuth2Client({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        redirectUri: process.env.GOOGLE_REDIRECT_URI,
+    });
+
+    const url = oauth2Client.generateAuthUrl({
         access_type: "offline",
         scope: ["profile", "email"],
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
     });
+
     res.redirect(url);
 };
 
 // google Oauth : callback
 
-export const googleCallback = async (req, res) => {
+export const googleCallback = async (req, res, next) => {
     try {
         const { code } = req.query;
-        const { tokens } = await googleClient.getToken(code);
-        googleClient.setCredentials(tokens);
 
-        // fetch userinfo
+        const oauth2Client = new OAuth2Client({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            redirectUri: process.env.GOOGLE_REDIRECT_URI,
+        });
+
+        const { tokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(tokens);
 
         const { data } = await axios.get(
             "https://www.googleapis.com/oauth2/v2/userinfo",
-            { headers: { Authorization: `Bearer ${tokens.access_token}` } }
+            {
+                headers: {
+                    Authorization: `Bearer ${tokens.access_token}`,
+                },
+            }
         );
-
-        // upsert user
 
         let user = await User.findOne({ googleId: data.id });
 
         if (!user) {
             user = await User.create({
-                googleId: data.Id,
+                googleId: data.id, // not data.Id — watch case!
                 email: data.email,
                 name: data.name,
                 avatarUrl: data.picture,
             });
         }
-
-        // issue our tokens
 
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
@@ -132,8 +147,9 @@ export const googleCallback = async (req, res) => {
         res.cookie("jid", refreshToken, COOKIE_OPTIONS).redirect(
             `${process.env.CLIENT_HOME_URL}/oauth-success?accessToken=${accessToken}`
         );
-    } catch (error) {
-        next(err);
+    } catch (err) {
+        console.error("Google OAuth error:", err.response?.data || err.message);
+        res.status(500).json({ message: "Google authentication failed" });
     }
 };
 

@@ -1,14 +1,15 @@
 import jwt from "jsonwebtoken";
 
-const { JWT_ACCESS_SESCRET, JWT_REFRESH_SECRET } = process.env;
 
 export const generateAccessToken = (user) => {
+    console.log(process.env.PORT);
+    console.log(`here inside ${process.env.JWT_ACCESS_SECRET}`);
     const payload = {
         sub: user._id,
         email: user.email,
     };
 
-    return jwt.sign(payload, JWT_ACCESS_SESCRET, {
+    return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
         expiresIn: "15m",
     });
 };
@@ -18,7 +19,7 @@ export const generateRefreshToken = (user) => {
         {
             sub: user._id,
         },
-        JWT_REFRESH_SECRET,
+        process.env.JWT_REFRESH_SECRET,
         {
             expiresIn: "7d",
         }
@@ -26,9 +27,9 @@ export const generateRefreshToken = (user) => {
 };
 
 export const verifyAccessToken = (token) => {
-    return jwt.verify(token, JWT_ACCESS_SESCRET);
+    return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 };
 
 export const verifyRefreshToken = (token) => {
-    return jwt.verify(token, JWT_REFRESH_SECRET);
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 };
