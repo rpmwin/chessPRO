@@ -1,10 +1,4 @@
-import {
-    Children,
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios.js";
 import { toast } from "react-hot-toast";
 
@@ -12,13 +6,19 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true); // ✅ new state
 
     useEffect(() => {
         api.get("/auth/profile")
             .then((res) => {
                 setUser(res.data);
             })
-            .catch(() => setUser(null));
+            .catch(() => {
+                setUser(null);
+            })
+            .finally(() => {
+                setLoading(false); // ✅ done loading, even if failed
+            });
     }, []);
 
     const signup = async ({ email, password, name }) => {
@@ -47,7 +47,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, setUser, signup, login, logout }}>
+        <AuthContext.Provider
+            value={{ user, setUser, signup, login, logout, loading }} // ✅ expose loading
+        >
             {children}
         </AuthContext.Provider>
     );

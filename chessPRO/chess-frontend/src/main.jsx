@@ -1,33 +1,48 @@
+// src/main.jsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.jsx";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+
+import App from "./App.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
+
 import Signup from "./components/Signup.jsx";
 import Login from "./components/Login.jsx";
 import OAuthSuccess from "./components/OAuthSuccess.jsx";
-
-const AppRoutes = () => {
-    const { user } = useAuth();
-    return (
-        <Routes>
-            <Route path="/" element={<App />}>
-                <Route path="signup" element={<Signup />} />
-                <Route path="login" element={<Login />} />
-                <Route path="oauth-success" element={<OAuthSuccess />} />
-            </Route>
-        </Routes>
-    );
-};
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import SearchPage from "./components/SearchPage.jsx";
+import ProfilePage from "./components/ProfilePage.jsx";
+import GamesPage from "./components/GamesPage.jsx";
+import "./index.css";
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>
         <BrowserRouter>
             <AuthProvider>
                 <Toaster position="top-right" />
-                <AppRoutes />
+                <Routes>
+                    {/* Public routes */}
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/oauth-success" element={<OAuthSuccess />} />
+
+                    {/* Protected routes */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route path="/" element={<SearchPage />} />
+                        <Route
+                            path="/profile/:username"
+                            element={<ProfilePage />}
+                        />
+                        <Route
+                            path="/profile/:username/games"
+                            element={<GamesPage />}
+                        />
+                    </Route>
+
+                    {/* Fallback */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
             </AuthProvider>
         </BrowserRouter>
     </StrictMode>
