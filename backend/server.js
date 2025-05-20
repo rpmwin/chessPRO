@@ -1,4 +1,4 @@
-import dotenv from "dotenv"; 
+import dotenv from "dotenv";
 dotenv.config(); // Load environment variables first, at the very top
 
 import express from "express";
@@ -7,6 +7,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectdb from "./db/connectDB.js";
 import authRoutes from "./routes/userAuth.route.js";
+import chesscomRoutes from "./routes/chesscom.routes.js";
 
 // // Now you can access process.env variables because dotenv is configured at the top
 // console.log(process.env.JWT_ACCESS_SECRET); // Accessing env vars here should work now
@@ -26,6 +27,7 @@ app.use(
 app.use(cookieParser());
 
 app.use("/auth", authRoutes);
+app.use("/chesscom", chesscomRoutes);
 
 // Catch-all for 404s
 app.use((req, res, next) => {
