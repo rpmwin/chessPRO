@@ -15,6 +15,8 @@ import SearchPage from "./components/SearchPage.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
 import GamesPage from "./components/GamesPage.jsx";
 import "./index.css";
+import EngineTest from "./components/EngineTest.jsx";
+import { Analysis } from "./components/Analysis.jsx";
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>
@@ -26,18 +28,21 @@ createRoot(document.getElementById("root")).render(
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/oauth-success" element={<OAuthSuccess />} />
+                    <Route path="/analysis" element={<Analysis />} />
 
                     {/* Protected routes */}
                     <Route element={<ProtectedRoute />}>
-                        <Route path="/" element={<SearchPage />} />
-                        <Route
-                            path="/profile/:username"
-                            element={<ProfilePage />}
-                        />
-                        <Route
-                            path="/profile/:username/games"
-                            element={<GamesPage />}
-                        />
+                        <Route element={<App />}>
+                            <Route path="/" element={<SearchPage />} />
+                            <Route
+                                path="/profile/:username"
+                                element={<ProfilePage />}
+                            />
+                            <Route
+                                path="/profile/:username/games"
+                                element={<GamesPage />}
+                            />
+                        </Route>
                     </Route>
 
                     {/* Fallback */}
