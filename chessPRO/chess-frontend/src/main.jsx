@@ -16,7 +16,9 @@ import ProfilePage from "./components/ProfilePage.jsx";
 import GamesPage from "./components/GamesPage.jsx";
 import "./index.css";
 import EngineTest from "./components/EngineTest.jsx";
-import { Analysis } from "./components/Analysis.jsx";
+import AnalysisPage from "./components/Analysis.jsx";
+import Home from "./components/Home.jsx";
+("./components/Analysis.jsx");
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>
@@ -25,15 +27,16 @@ createRoot(document.getElementById("root")).render(
                 <Toaster position="top-right" />
                 <Routes>
                     {/* Public routes */}
+                    <Route path="/" element = {<Home />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/oauth-success" element={<OAuthSuccess />} />
-                    <Route path="/analysis" element={<Analysis />} />
+                    <Route path="/analysis" element={<AnalysisPage />} />
 
                     {/* Protected routes */}
                     <Route element={<ProtectedRoute />}>
                         <Route element={<App />}>
-                            <Route path="/" element={<SearchPage />} />
+                            <Route path="/search" element={<SearchPage />} />
                             <Route
                                 path="/profile/:username"
                                 element={<ProfilePage />}

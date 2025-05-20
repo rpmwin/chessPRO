@@ -9,11 +9,25 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true); // ✅ new state
 
     useEffect(() => {
+        const token = localStorage.getItem("accessToken");
+
+        // If there's no token, we know the user is logged out.
+        // Just mark loading=false and bail out.
+        if (!token) {
+            setUser(null);
+            setLoading(false);
+            return;
+        }
+
         api.get("/auth/profile")
             .then((res) => {
                 setUser(res.data);
             })
-            .catch(() => {
+            .catch((err) => {
+                // setUser(null);
+                if (err.response?.status === 401) {
+                    localStorage.removeItem("accessToken");
+                }
                 setUser(null);
             })
             .finally(() => {

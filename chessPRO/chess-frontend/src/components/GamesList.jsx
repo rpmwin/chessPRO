@@ -96,6 +96,24 @@ export default function GamesList({ initialArchives, username, api }) {
                             <p className="text-sm text-gray-400">
                                 Time: {game.time_control}
                             </p>
+                            <button
+                                onClick={() => {
+                                    // save this game’s PGN & an identifier
+                                    sessionStorage.setItem(
+                                        "analysis_pgn",
+                                        game.pgn
+                                    );
+                                    sessionStorage.setItem(
+                                        "analysis_id",
+                                        game.url
+                                    );
+                                    // navigate to Analysis page
+                                    navigate("/analysis");
+                                }}
+                                className="mt-2 w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded"
+                            >
+                                Analyze
+                            </button>
                             <a
                                 href={game.url}
                                 target="_blank"
