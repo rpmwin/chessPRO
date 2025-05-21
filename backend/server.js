@@ -21,7 +21,7 @@ connectdb();
 app.use(express.json());
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: "https://chesspro.rishikpuneetm.xyz/",
         credentials: true,
     })
 );
@@ -31,6 +31,10 @@ app.use("/auth", authRoutes);
 app.use("/chesscom", chesscomRoutes);
 app.use("/analysis", AnalysisRoutes);
 
+// Basic testing
+app.get("/", (req, res) => {
+    res.send("chess backend is running");
+});
 // Catch-all for 404s
 app.use((req, res, next) => {
     res.status(404).json({ error: true, message: "Not Found" });
@@ -40,7 +44,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     // Log the full error for your diagnostics
     console.error(err);
-
+    
     // Send a clean JSON response
     const status = err.status || 500;
     res.status(status).json({
@@ -49,11 +53,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Basic testing
-app.get("/", (req, res) => {
-    res.send("chess backend is running");
-});
 
-app.listen(process.env.PORT || 5000, () => {
+app.listen(process.env.PORT || 5000, "0.0.0.0", () => {
     console.log(`server is running on port ${process.env.PORT}`);
 });

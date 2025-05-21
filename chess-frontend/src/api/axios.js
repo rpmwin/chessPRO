@@ -2,7 +2,7 @@ import axios, { mergeConfig } from "axios";
 import { toast } from "react-hot-toast";
 
 const api = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: "https://chessproapi.rishikpuneetm.xyz",
     withCredentials: true,
 });
 
@@ -44,7 +44,7 @@ api.interceptors.response.use(
         config._retry = true;
         try {
             const { data } = await axios.post(
-                "http://localhost:5000/auth/refresh",
+                "https://chessproapi.rishikpuneetm.xyz/auth/refresh",
                 {},
                 { withCredentials: true }
             );
