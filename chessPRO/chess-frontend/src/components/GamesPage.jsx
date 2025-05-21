@@ -26,6 +26,7 @@ export default function GamesPage() {
     const [loadingArchives, setLoadingArchives] = useState(true);
     const [loadingArchive, setLoadingArchive] = useState(false);
     const [allLoaded, setAllLoaded] = useState(false);
+    const [visibleCount, setVisibleCount] = useState(30); // start by showing 30 games
 
     const boardRef = useRef(null);
     const [boardWidth, setBoardWidth] = useState(300);
@@ -41,12 +42,11 @@ export default function GamesPage() {
         window.addEventListener("resize", updateWidth);
         return () => window.removeEventListener("resize", updateWidth);
     }, []);
-  
 
     // index of next archive to load
     const idxRef = useRef(0);
     // intersection observer sentinel
-    const { ref: sentinelRef, inView } = useInView({ threshold: 0.1 });
+    const { ref: sentinelRef, inView } = useInView({ threshold: 0.5 });
 
     // fetch archives on mount
     useEffect(() => {
