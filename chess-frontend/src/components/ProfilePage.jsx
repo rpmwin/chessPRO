@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { format, formatDistanceToNow } from "date-fns";
@@ -18,6 +16,7 @@ import {
     Zap,
     Loader2,
 } from "lucide-react";
+import userImg from "./user.svg";
 
 export default function ProfilePage() {
     const { username } = useParams();
@@ -34,23 +33,30 @@ export default function ProfilePage() {
             setLoading(true);
             setError(false);
             try {
-                const [pRes, sRes, aRes] = await Promise.all([
-                    fetch(`https://api.chess.com/pub/player/${username}`),
+                // First, fetch profile
+                const pRes = await fetch(
+                    `https://api.chess.com/pub/player/${username}`
+                );
+                if (!pRes.ok) {
+                    throw new Error("Profile not found");
+                }
+                const pData = await pRes.json();
+                setProfile(pData);
+
+                // If profile is valid, fetch stats and archives in parallel
+                const [sRes, aRes] = await Promise.all([
                     fetch(`https://api.chess.com/pub/player/${username}/stats`),
                     fetch(
                         `https://api.chess.com/pub/player/${username}/games/archives`
                     ),
                 ]);
 
-                if (!pRes.ok) throw new Error("Profile not found");
                 if (!sRes.ok) throw new Error("Stats not found");
                 if (!aRes.ok) throw new Error("Archives not found");
 
-                const pData = await pRes.json();
                 const sData = await sRes.json();
                 const aData = await aRes.json();
 
-                setProfile(pData);
                 setStats(sData);
                 setArchives(aData.archives || []);
             } catch (err) {
@@ -195,9 +201,7 @@ export default function ProfilePage() {
                             <div className="bg-gradient-to-r from-teal-600 to-blue-600 p-6 text-center">
                                 <div className="relative inline-block mb-4">
                                     <img
-                                        src={
-                                            profile.avatar || "/placeholder.svg"
-                                        }
+                                        src={profile.avatar || userImg}
                                         alt={profile.username}
                                         className="w-28 h-28 rounded-full border-4 border-gray-900 shadow-lg object-cover"
                                     />

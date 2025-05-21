@@ -145,7 +145,7 @@ export default function Home() {
 
                     <div className="container mx-auto px-4 md:px-8 text-center relative z-10">
                         <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white">
-                            ChessInsight
+                            ChessPRO
                         </h1>
                         <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
                             Search Chess.com users, browse archives, analyze
