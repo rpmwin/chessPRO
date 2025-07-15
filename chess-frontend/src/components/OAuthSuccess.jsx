@@ -13,7 +13,7 @@ function OAuthSuccess() {
         if (token) {
             localStorage.setItem("accessToken", token);
             api.get("/profile").then((res) => setUser(res.data));
-            window.location.href = "/";
+            window.location.href = "/search";
         }
     }, []);
 

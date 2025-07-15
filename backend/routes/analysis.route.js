@@ -25,7 +25,8 @@ router.post("/", auth, async (req, res, next) => {
 
         // Reset to start‑pos for per‑move analysis
         game.reset();
-        const stockfishPath = "/usr/bin/stockfish";
+        const stockfishPath =
+          "/home/iamrpm/Documents/chessPRO/backend/stockfish";
         const results = [];
 
         for (let i = 0; i < history.length; i++) {
@@ -128,7 +129,7 @@ Do **not** include any explanatory text or markdown—just the raw JSON. and als
 `.trim();
 
         const response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
             contents: JSON.stringify(results, null, 2),
             config: {
                 systemInstruction,
