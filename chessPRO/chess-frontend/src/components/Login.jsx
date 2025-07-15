@@ -54,7 +54,7 @@ export default function Login() {
 
     const googleAuth = () => {
         window.location.href =
-            "https://chessproapi.rishikpuneetm.xyz/auth/google";
+            "http://localhost:5000/auth/google";
     };
 
     return (
