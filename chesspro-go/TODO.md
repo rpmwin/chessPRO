@@ -127,3 +127,23 @@ Live status tracker. Update this file after every step. One commit per step.
 - macOS ControlCenter owns port 5000 — default changed to 8080 in .env.sample
 - Linux stockfish binary (old project) doesn't run on macOS — use `brew install stockfish`
 - PGN tags must be on separate lines for notnil/chess to parse them correctly
+
+## Phase 8 — Frontend Integration
+
+- [x] **FE1** Fix baseURL: localhost:5000 → localhost:8080
+- [x] **FE2** Fix token field: data.accessToken → data.access_token
+- [x] **FE3** Fix /auth/profile → /auth/me
+- [x] **FE4** Fix refresh: POST → GET /auth/refresh
+- [x] **FE5** Fix logout: /logout → /auth/logout
+- [x] **FE6** Fix Google OAuth URL to port 8080
+- [x] **FE7** SSE streaming in Analysis.jsx: fetch + ReadableStream, progressive board updates
+- [x] **FE8** Progress bar during streaming (done/total moves)
+- [x] **FE9** Game summary card: accuracy bars, error counts per side
+- [x] **FE10** Opening display (ECO + name from summary.opening)
+- [x] **FE11** Classification badges on every move in history table
+- [x] **FE12** SVG eval chart (sparkline) with current position marker
+- [x] **FE13** Commentary streams incrementally from SSE
+- [x] **FE14** Lichess link button for blunder/mistake positions
+- [x] **FE15** Mate-in-N display on eval panel
+- [x] **FE16** Critical moment ⚡ icon on board header
+- [x] **FE17** Phase + centipawn loss shown with commentary
