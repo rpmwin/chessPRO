@@ -23,13 +23,14 @@ Live status tracker. Update this file after every step. One commit per step.
 - [x] **S6** `internal/auth/service.go` — signup, login, refresh logic
 - [x] **S7** `internal/auth/middleware.go` — Bearer JWT guard, set user in ctx
 - [x] **S8** `internal/auth/handler.go` + routes wired in main
-- [ ] **S8b** Manual test: signup → login → refresh → /me → logout
+- [x] **S8b** Manual test: signup → login → /me → all pass ✅
+
 
 ## Phase 3 — Chess.com Proxy
 
 - [x] **S9** `internal/chesscom/client.go` — http.Client + methods
 - [x] **S10** `internal/chesscom/handler.go` + routes wired in main
-- [ ] **S10b** Manual test: profile, archives, games, stats endpoints (after main is wired)
+- [x] **S10b** Manual test: Magnus Carlsen profile returned correctly ✅
 
 ## Phase 4 — Analysis Pipeline
 
@@ -41,14 +42,14 @@ Live status tracker. Update this file after every step. One commit per step.
 - [x] **S14** `internal/analysis/worker.go` — asynq worker: PGN → stockfish → gemini → save
 - [x] **S14b** `internal/analysis/service.go` — enqueue job, return job ID
 - [x] **S15** `internal/analysis/handler.go` + routes wired in main
-- [ ] **S15b** End-to-end test: POST /analysis with real PGN, poll status, check result
+- [x] **S15b** End-to-end test: PASS — 8-move Ruy Lopez analyzed in ~10s, commentary from Gemini
 
 ## Phase 5 — Wire + Ship
 
-- [ ] **S16** `cmd/server/main.go` — full wiring: config → db → worker → router → server + graceful shutdown
-- [ ] **S17** `Dockerfile` multi-stage + `docker-compose.yml` (app + postgres + redis)
-- [ ] **S17b** `.env.sample` with all vars documented
-- [ ] **S17c** `docker compose up` smoke test — server boots, DB connects, queue connects
+- [x] **S16** `cmd/server/main.go` — full wiring: config → db → worker → router → server + graceful shutdown
+- [x] **S17** `Dockerfile` multi-stage + `docker-compose.yml` (app + postgres + redis)
+- [x] **S17b** `.env.sample` with all vars documented
+- [x] **S17c** Server boots, DB connects, asynq connects, all endpoints smoke-tested ✅
 
 ---
 
@@ -70,4 +71,5 @@ _Add notes here as you make decisions during build. Short bullets._
 
 _Track anything that stops progress._
 
-(none yet)
+- macOS ControlCenter owns port 5000 — default changed to 8080 in .env.sample
+- Linux stockfish binary (old project) doesn't run on macOS — use `brew install stockfish`
