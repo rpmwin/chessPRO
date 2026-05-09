@@ -19,7 +19,7 @@ Live status tracker. Update this file after every step. One commit per step.
 
 ## Phase 2 — Auth
 
-- [ ] **S5** `internal/user/model.go` + `repository.go` — CRUD via raw pgx
+- [x] **S5** `internal/user/model.go` + `repository.go` — CRUD via raw pgx
 - [ ] **S6** `internal/auth/service.go` — signup, login, refresh logic
 - [ ] **S7** `internal/auth/middleware.go` — Bearer JWT guard, set user in ctx
 - [ ] **S8** `internal/auth/handler.go` + routes wired in main
