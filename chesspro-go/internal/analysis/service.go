@@ -16,6 +16,7 @@ func NewService(repo *Repository, client *asynq.Client) *Service {
 	return &Service{repo: repo, client: client}
 }
 
+// Submit creates a DB record and enqueues the analysis job (async).
 func (s *Service) Submit(ctx context.Context, userID, pgn string) (*Analysis, error) {
 	a, err := s.repo.Create(ctx, userID, pgn)
 	if err != nil {
@@ -32,4 +33,9 @@ func (s *Service) Submit(ctx context.Context, userID, pgn string) (*Analysis, er
 	}
 
 	return a, nil
+}
+
+// CreateRecord creates a DB record without enqueuing (for sync/inline processing).
+func (s *Service) CreateRecord(ctx context.Context, userID, pgn string) (*Analysis, error) {
+	return s.repo.Create(ctx, userID, pgn)
 }

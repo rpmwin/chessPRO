@@ -6,8 +6,10 @@ import (
 	"io"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var (
@@ -137,6 +139,87 @@ func parseInfoLine(line, fen string) PositionResult {
 	}
 
 	return res
+}
+
+// AnalyzeGameParallel spawns up to concurrency Stockfish instances and analyzes
+// all FENs in parallel. Each instance handles one position independently.
+// Order of results matches order of fens.
+func (s *Stockfish) AnalyzeGameParallel(fens []string, depth int) ([]PositionResult, error) {
+	concurrency := runtime.NumCPU()
+	if concurrency > 4 {
+		concurrency = 4 // cap at 4 to avoid thrashing on large machines
+	}
+	if concurrency > len(fens) {
+		concurrency = len(fens)
+	}
+
+	type indexedResult struct {
+		idx int
+		res PositionResult
+		err error
+	}
+
+	sem := make(chan struct{}, concurrency)
+	results := make([]PositionResult, len(fens))
+	ch := make(chan indexedResult, len(fens))
+	var wg sync.WaitGroup
+
+	for i, fen := range fens {
+		wg.Add(1)
+		go func(idx int, fen string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			res, err := s.analyzeSingle(fen, depth)
+			ch <- indexedResult{idx: idx, res: res, err: err}
+		}(i, fen)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	for r := range ch {
+		if r.err != nil {
+			return nil, fmt.Errorf("analyze fen[%d]: %w", r.idx, r.err)
+		}
+		results[r.idx] = r.res
+	}
+	return results, nil
+}
+
+// analyzeSingle spawns a fresh Stockfish process for a single FEN analysis.
+// Cheaper to spawn per-position than to multiplex on one process.
+func (s *Stockfish) analyzeSingle(fen string, depth int) (PositionResult, error) {
+	cmd := exec.Command(s.path)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return PositionResult{}, fmt.Errorf("stdin: %w", err)
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return PositionResult{}, fmt.Errorf("stdout: %w", err)
+	}
+	if err := cmd.Start(); err != nil {
+		return PositionResult{}, fmt.Errorf("start: %w", err)
+	}
+	defer func() {
+		fmt.Fprintln(stdin, "quit")
+		cmd.Wait()
+	}()
+
+	scanner := bufio.NewScanner(stdout)
+	fmt.Fprintln(stdin, "uci")
+	if err := waitFor(scanner, "uciok"); err != nil {
+		return PositionResult{}, err
+	}
+	fmt.Fprintln(stdin, "isready")
+	if err := waitFor(scanner, "readyok"); err != nil {
+		return PositionResult{}, err
+	}
+	return s.analyzePosition(stdin, scanner, fen, depth)
 }
 
 func waitFor(scanner *bufio.Scanner, token string) error {

@@ -3,30 +3,37 @@ package analysis
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/hibiken/asynq"
 	"github.com/iamrpm/chesspro-go/internal/auth"
 )
 
 type Handler struct {
-	svc  *Service
-	repo *Repository
+	svc     *Service
+	repo    *Repository
+	worker  *Worker
 }
 
-func NewHandler(svc *Service, repo *Repository) *Handler {
-	return &Handler{svc: svc, repo: repo}
+func NewHandler(svc *Service, repo *Repository, worker *Worker) *Handler {
+	return &Handler{svc: svc, repo: repo, worker: worker}
 }
 
 func (h *Handler) Mount(r chi.Router, mw *auth.Middleware) {
 	r.Route("/analysis", func(r chi.Router) {
 		r.Use(mw.Require)
-		r.Post("/", h.Submit)
+		r.Post("/", h.Submit)         // async: returns id immediately, frontend polls
+		r.Post("/stream", h.Stream)   // SSE: streams move-by-move results as analysis runs
 		r.Get("/", h.List)
 		r.Get("/{id}", h.Get)
+		r.Get("/{id}/poll", h.Poll)   // long-poll: blocks until done (for frontend compat)
 	})
 }
 
+// Submit enqueues an analysis job and returns immediately with the job id.
 func (h *Handler) Submit(w http.ResponseWriter, r *http.Request) {
 	u := auth.UserFromCtx(r.Context())
 	if u == nil {
@@ -35,7 +42,8 @@ func (h *Handler) Submit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		PGN string `json:"pgn"`
+		PGN  string `json:"pgn"`
+		Sync bool   `json:"sync"` // if true, block until done (for legacy frontend)
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.PGN == "" {
 		writeErr(w, http.StatusBadRequest, "pgn is required")
@@ -47,7 +55,58 @@ func (h *Handler) Submit(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, "failed to submit analysis")
 		return
 	}
+
+	// Sync mode: create record without enqueuing, run inline, return result directly.
+	if body.Sync {
+		rec, err := h.svc.CreateRecord(r.Context(), u.ID, body.PGN)
+		if err != nil {
+			writeErr(w, http.StatusInternalServerError, "failed to create analysis")
+			return
+		}
+		if err := h.worker.ProcessTask(r.Context(), mustTask(rec.ID)); err != nil {
+			writeErr(w, http.StatusInternalServerError, "analysis failed")
+			return
+		}
+		result, err := h.repo.FindByID(r.Context(), rec.ID)
+		if err != nil {
+			writeErr(w, http.StatusInternalServerError, "failed to fetch result")
+			return
+		}
+		writeJSON(w, http.StatusOK, result.Results)
+		return
+	}
+
 	writeJSON(w, http.StatusAccepted, a)
+}
+
+// Poll blocks until the analysis is done or times out (max 5 min).
+// Frontend can call GET /analysis/:id/poll instead of polling manually.
+func (h *Handler) Poll(w http.ResponseWriter, r *http.Request) {
+	u := auth.UserFromCtx(r.Context())
+	id := chi.URLParam(r, "id")
+
+	deadline := time.Now().Add(5 * time.Minute)
+	for time.Now().Before(deadline) {
+		a, err := h.repo.FindByID(r.Context(), id)
+		if err != nil {
+			writeErr(w, http.StatusNotFound, "analysis not found")
+			return
+		}
+		if a.UserID != u.ID {
+			writeErr(w, http.StatusForbidden, "forbidden")
+			return
+		}
+		if a.Status == StatusDone || a.Status == StatusError {
+			writeJSON(w, http.StatusOK, a)
+			return
+		}
+		select {
+		case <-r.Context().Done():
+			return
+		case <-time.After(2 * time.Second):
+		}
+	}
+	writeErr(w, http.StatusRequestTimeout, "analysis timed out")
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +138,54 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"analyses": list})
+}
+
+// Stream handles POST /analysis/stream — runs analysis inline and streams
+// Server-Sent Events so the frontend can update the board move-by-move.
+// Each event: "data: {type, ...}\n\n"
+// Event types: "progress" | "move" | "commentary" | "done" | "error"
+func (h *Handler) Stream(w http.ResponseWriter, r *http.Request) {
+	u := auth.UserFromCtx(r.Context())
+	if u == nil {
+		writeErr(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var body struct {
+		PGN string `json:"pgn"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.PGN == "" {
+		writeErr(w, http.StatusBadRequest, "pgn is required")
+		return
+	}
+
+	// SSE headers
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no") // disable nginx buffering
+	w.WriteHeader(http.StatusOK)
+
+	flusher, canFlush := w.(http.Flusher)
+
+	ch := make(chan ProgressEvent, 64)
+	go h.worker.AnalyzeStream(r.Context(), body.PGN, ch)
+
+	for event := range ch {
+		data, err := json.Marshal(event)
+		if err != nil {
+			continue
+		}
+		fmt.Fprintf(w, "data: %s\n\n", data)
+		if canFlush {
+			flusher.Flush()
+		}
+	}
+}
+
+func mustTask(analysisID string) *asynq.Task {
+	t, _ := NewAnalysisTask(analysisID)
+	return t
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
