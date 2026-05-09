@@ -15,7 +15,7 @@ Live status tracker. Update this file after every step. One commit per step.
 - [x] **S2** `internal/config/config.go` — load all env vars, fatal if missing
 - [x] **S3** `internal/db/postgres.go` — pgx pool, ping on start, fatal if fail
 - [x] **S3b** `migrations/001_create_users.sql` + `migrations/002_create_analyses.sql`
-- [ ] **S4** `internal/jwt/jwt.go` — generate + verify access/refresh tokens
+- [x] **S4** `internal/jwt/jwt.go` — generate + verify access/refresh tokens
 
 ## Phase 2 — Auth
 
