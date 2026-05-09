@@ -7,9 +7,9 @@ Answer when you have time — I'll leave sensible defaults until then.
 
 ## Pending
 
-- **Q1**: Stockfish binary location on your machine? 
-  Default used: `/usr/local/bin/stockfish`. Will check `which stockfish` at build time.
-  → Using `STOCKFISH_PATH` env var so you can override anytime.
+- **Q1**: ~~Stockfish binary location on your machine?~~ **RESOLVED**
+  → Installed via `brew install stockfish`. Path: `/opt/homebrew/bin/stockfish`.
+  Linux binary in old project won't work on macOS (wrong arch).
 
 - **Q2**: Google OAuth — do you have CLIENT_ID/SECRET for chesspro?
   → Left blank in .env.sample. Google OAuth endpoints will 500 until filled. All other endpoints work without it.
