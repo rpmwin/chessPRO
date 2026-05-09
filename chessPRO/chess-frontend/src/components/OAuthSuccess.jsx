@@ -7,12 +7,10 @@ function OAuthSuccess() {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const token = params.get("accessToken");
-
-        console.log(token);
+        const token = params.get("access_token");
         if (token) {
             localStorage.setItem("accessToken", token);
-            api.get("/profile").then((res) => setUser(res.data));
+            api.get("/auth/me").then((res) => setUser(res.data));
             window.location.href = "/search";
         }
     }, []);

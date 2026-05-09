@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
             return;
         }
 
-        api.get("/auth/profile")
+        api.get("/auth/me")
             .then((res) => {
                 setUser(res.data);
             })
@@ -41,21 +41,21 @@ export const AuthProvider = ({ children }) => {
             password,
             name,
         });
-        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("accessToken", data.access_token);
         setUser(data.user);
         toast.success("Signed up successfully!");
     };
 
     const login = async ({ email, password }) => {
         const { data } = await api.post("/auth/login", { email, password });
-        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("accessToken", data.access_token);
         setUser(data.user);
         toast.success("Logged in successfully!");
     };
 
     const logout = () => {
         localStorage.removeItem("accessToken");
-        api.post("/logout");
+        api.post("/auth/logout");
         setUser(null);
         toast("Logged out");
     };

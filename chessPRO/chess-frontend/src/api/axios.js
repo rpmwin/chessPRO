@@ -1,8 +1,8 @@
-import axios, { mergeConfig } from "axios";
+import axios from "axios";
 import { toast } from "react-hot-toast";
 
 const api = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: "http://localhost:8080",
     withCredentials: true,
 });
 
@@ -32,7 +32,7 @@ api.interceptors.response.use(
         if (
             config._retry ||
             url.includes("/auth/refresh") ||
-            url.includes("/auth/profile")
+            url.includes("/auth/me")
         ) {
             // If the refresh call itself or profile call 401’d, force logout
             toast.error("Session expired. Please log in again.");
@@ -43,12 +43,11 @@ api.interceptors.response.use(
         // 3) Mark and attempt one refresh
         config._retry = true;
         try {
-            const { data } = await axios.post(
-                "http://localhost:5000/auth/refresh",
-                {},
+            const { data } = await axios.get(
+                "http://localhost:8080/auth/refresh",
                 { withCredentials: true }
             );
-            const newToken = data.accessToken;
+            const newToken = data.access_token;
             if (!newToken) throw new Error("No token in refresh response");
 
             localStorage.setItem("accessToken", newToken);
