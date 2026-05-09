@@ -11,7 +11,7 @@ Live status tracker. Update this file after every step. One commit per step.
 
 ## Phase 1 — Foundation
 
-- [ ] **S1** `go mod init` + folder scaffold + `.gitkeep` files
+- [x] **S1** `go mod init` + folder scaffold + `.gitkeep` files
 - [ ] **S2** `internal/config/config.go` — load all env vars, fatal if missing
 - [ ] **S3** `internal/db/postgres.go` — pgx pool, ping on start, fatal if fail
 - [ ] **S3b** `migrations/001_create_users.sql` + `migrations/002_create_analyses.sql`
