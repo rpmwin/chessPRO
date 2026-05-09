@@ -36,11 +36,11 @@ Live status tracker. Update this file after every step. One commit per step.
 - [x] **S11** `internal/analysis/model.go` + `repository.go` + migration
 - [x] **S12** `internal/analysis/stockfish.go` — UCI wrapper, spawn once per job
 - [x] **S12b** Unit test: stockfish wrapper with a known FEN — PASS (depth 10, 1.8s for 2 positions)
-- [ ] **S13** `internal/analysis/gemini.go` — call Gemini, parse commentary JSON
-- [ ] **S13b** Manual test: Gemini with dummy move data
-- [ ] **S14** `internal/analysis/worker.go` — asynq worker: PGN → stockfish → gemini → save
-- [ ] **S14b** `internal/analysis/service.go` — enqueue job, return job ID
-- [ ] **S15** `internal/analysis/handler.go` + routes wired in main
+- [x] **S13** `internal/analysis/gemini.go` — call Gemini, parse commentary JSON
+- [x] **S13b** Manual test: Gemini with dummy move data — PASS (2.98s, 2 comments)
+- [x] **S14** `internal/analysis/worker.go` — asynq worker: PGN → stockfish → gemini → save
+- [x] **S14b** `internal/analysis/service.go` — enqueue job, return job ID
+- [x] **S15** `internal/analysis/handler.go` + routes wired in main
 - [ ] **S15b** End-to-end test: POST /analysis with real PGN, poll status, check result
 
 ## Phase 5 — Wire + Ship
