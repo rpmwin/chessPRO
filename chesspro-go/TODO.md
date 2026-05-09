@@ -27,9 +27,9 @@ Live status tracker. Update this file after every step. One commit per step.
 
 ## Phase 3 — Chess.com Proxy
 
-- [ ] **S9** `internal/chesscom/client.go` — http.Client + methods
-- [ ] **S10** `internal/chesscom/handler.go` + routes wired in main
-- [ ] **S10b** Manual test: profile, archives, games, stats endpoints
+- [x] **S9** `internal/chesscom/client.go` — http.Client + methods
+- [x] **S10** `internal/chesscom/handler.go` + routes wired in main
+- [ ] **S10b** Manual test: profile, archives, games, stats endpoints (after main is wired)
 
 ## Phase 4 — Analysis Pipeline
 
