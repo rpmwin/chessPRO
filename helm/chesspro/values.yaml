@@ -1,0 +1,52 @@
+backend:
+  image:
+    repository: ghcr.io/iamrpm/chesspro-go
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 8080
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  env:
+    PORT: "8080"
+    APP_ENV: production
+    STOCKFISH_PATH: /usr/bin/stockfish
+    REDIS_ADDR: ""        # set via --set or secret
+    DATABASE_URL: ""      # set via secret
+    JWT_ACCESS_SECRET: "" # set via secret
+    JWT_REFRESH_SECRET: ""
+    GEMINI_API_KEY: ""
+    GOOGLE_CLIENT_ID: ""
+    GOOGLE_CLIENT_SECRET: ""
+    GOOGLE_REDIRECT_URI: ""
+    CLIENT_HOME_URL: ""
+    CORS_ORIGIN: ""
+
+frontend:
+  image:
+    repository: ghcr.io/iamrpm/chesspro-frontend
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+ingress:
+  enabled: true
+  className: traefik   # k3s default ingress controller
+  host: chesspro.local
+  tls: false
+
+serviceAccount:
+  create: false

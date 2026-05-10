@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chesspro.backend.fullname" . }}
+  labels:
+    {{- include "chesspro.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "{{ .Values.backend.port }}"
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.port }}
+          envFrom:
+            - secretRef:
+                name: {{ include "chesspro.backend.fullname" . }}-secret
+          env:
+            {{- range $k, $v := .Values.backend.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}

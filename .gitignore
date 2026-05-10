@@ -1,0 +1,17 @@
+# env files — never commit secrets
+.env
+*.env.local
+chesspro-go/.env
+
+# build artifacts
+chesspro-go/chesspro-go
+chessPRO/chess-frontend/dist/
+chessPRO/chess-frontend/node_modules/
+
+# Go
+chesspro-go/server/
+
+# kubeconfig
+*.kubeconfig
+kubeconfig
+/tmp/kubeconfig
