@@ -1,27 +1,30 @@
 "use client";
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     ChevronRight,
     Eye,
     EyeOff,
     Lock,
-    CastleIcon as ChessKnight,
-    PianoIcon as ChessPawn,
+    Castle as ChessKnight,
+    Piano as ChessPawn,
+    Loader2,
 } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Login() {
     const { login } = useAuth();
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        username: "",
+        email: "",
         password: "",
     });
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -36,11 +39,11 @@ export default function Login() {
         setShowPassword((prev) => !prev);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = {};
-        if (!formData.username.trim())
-            newErrors.username = "Username or email is required";
+        if (!formData.email.trim())
+            newErrors.email = "Email is required";
         if (!formData.password) newErrors.password = "Password is required";
         else if (formData.password.length < 6)
             newErrors.password = "Password must be at least 6 characters";
@@ -49,7 +52,16 @@ export default function Login() {
             setErrors(newErrors);
             return;
         }
-        login(formData);
+
+        setIsSubmitting(true);
+        try {
+            await login(formData);
+            navigate("/", { replace: true });
+        } catch (err) {
+            setErrors((prev) => ({ ...prev, form: "Login failed. Check credentials." }));
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const googleAuth = () => {
@@ -90,18 +102,18 @@ export default function Login() {
                         <div className="relative">
                             <ChessPawn className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                             <input
-                                type="text"
-                                name="username"
-                                value={formData.username}
+                                type="email"
+                                name="email"
+                                value={formData.email}
                                 onChange={handleChange}
-                                placeholder="Username or Email"
-                                aria-label="Username or Email"
+                                placeholder="Email"
+                                aria-label="Email"
                                 className="w-full bg-gray-700/50 border border-gray-600 rounded-lg py-3 pl-10 pr-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent hover:border-gray-500 transition-all"
                             />
                         </div>
-                        {errors.username && (
+                        {errors.email && (
                             <p className="text-red-400 text-sm pl-2">
-                                {errors.username}
+                                {errors.email}
                             </p>
                         )}
                     </div>
@@ -143,13 +155,30 @@ export default function Login() {
                         )}
                     </div>
 
+                    {/* Form error */}
+                    {errors.form && (
+                        <div className="bg-red-900/30 border border-red-800 text-red-300 px-4 py-2 rounded-lg">
+                            {errors.form}
+                        </div>
+                    )}
+
                     {/* Submit */}
                     <button
                         type="submit"
-                        className="w-full bg-teal-500 hover:bg-teal-600 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50"
+                        disabled={isSubmitting}
+                        className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50"
                     >
-                        Log In
-                        <ChevronRight className="ml-2 h-5 w-5" />
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                                Logging In...
+                            </>
+                        ) : (
+                            <>
+                                Log In
+                                <ChevronRight className="ml-2 h-5 w-5" />
+                            </>
+                        )}
                     </button>
 
                     {/* Forgot */}

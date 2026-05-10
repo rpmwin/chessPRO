@@ -15,10 +15,8 @@ import SearchPage from "./components/SearchPage.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
 import GamesPage from "./components/GamesPage.jsx";
 import "./index.css";
-import EngineTest from "./components/EngineTest.jsx";
 import AnalysisPage from "./components/Analysis.jsx";
 import Home from "./components/Home.jsx";
-("./components/Analysis.jsx");
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>

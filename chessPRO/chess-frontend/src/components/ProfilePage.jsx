@@ -9,14 +9,14 @@ import {
     ExternalLink,
     Clock,
     Award,
-    CastleIcon as ChessKnight,
-    RocketIcon as ChessRook,
+    Castle as ChessKnight,
+    Rocket as ChessRook,
     Activity,
     Target,
     Zap,
     Loader2,
 } from "lucide-react";
-import userImg from "./user.svg";
+import userImg from "../assets/user.svg";
 
 export default function ProfilePage() {
     const { username } = useParams();

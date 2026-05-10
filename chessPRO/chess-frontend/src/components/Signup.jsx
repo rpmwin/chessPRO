@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     ChevronRight,
     Eye,
@@ -9,14 +9,15 @@ import {
     Lock,
     Key,
     Mail,
-    CastleIcon as ChessKnight,
-    RocketIcon as ChessRook,
+    Castle as ChessKnight,
+    Rocket as ChessRook,
     Loader2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Signup() {
     const { signup } = useAuth();
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         username: "",
@@ -76,6 +77,7 @@ export default function Signup() {
         setIsSubmitting(true);
         try {
             await signup(formData);
+            navigate("/", { replace: true });
         } catch (err) {
             setErrors((prev) => ({
                 ...prev,

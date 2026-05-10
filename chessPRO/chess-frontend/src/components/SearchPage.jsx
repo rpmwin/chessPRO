@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
     Search,
-    CastleIcon as ChessKnight,
-    PianoIcon as ChessPawn,
+    Castle as ChessKnight,
+    Piano as ChessPawn,
 } from "lucide-react";
 
 export default function SearchPage() {

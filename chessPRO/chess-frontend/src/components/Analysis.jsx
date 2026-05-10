@@ -8,15 +8,15 @@ import { Engine } from "../Engine";
 import { EvaluationBar } from "../components/EvaluationBar";
 import { toast } from "react-hot-toast";
 import {
-    ChevronLeft, ChevronRight, ArrowLeft, CastleIcon as ChessKnight,
+    ChevronLeft, ChevronRight, ArrowLeft, Castle as ChessKnight,
     Lightbulb, BarChart3, Code, Clock, FastForward, Rewind, Info,
-    Maximize2, Minimize2, Cpu, Brain, RefreshCw, RocketIcon as ChessRook,
-    ChurchIcon as ChessBishop, CastleIcon as ChessKing, DiamondIcon as ChessQueen,
-    PianoIcon as ChessPawn, Route, ExternalLink, Zap, TrendingUp, Award,
+    Maximize2, Minimize2, Cpu, Brain, RefreshCw, Rocket as ChessRook,
+    Church as ChessBishop, Crown as ChessKing, Diamond as ChessQueen,
+    Piano as ChessPawn, Route, ExternalLink, Zap, TrendingUp, Award,
     Target, BookOpen, AlertTriangle
 } from "lucide-react";
 
-const BACKEND = "http://localhost:8080";
+const BACKEND = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 // Classification styles
 const CLASSIFICATION_STYLE = {
@@ -145,13 +145,16 @@ export default function AnalysisPage() {
     }, [pgn, game]);
 
     // local engine analysis
+    const engineDepthRef = useRef(0);
     useEffect(() => {
         engine.stop();
+        engineDepthRef.current = 0;
         setLocalEval({ cp: 0, bestLine: "Analyzing…", depth: 0 });
         setParsedBestLine([]);
         engine.evaluatePosition(position, 12);
         engine.onMessage((info) => {
-            if (info.depth >= 8) {
+            if (info.depth >= 8 && info.depth > engineDepthRef.current) {
+                engineDepthRef.current = info.depth;
                 const cp = (game.turn() === "w" ? 1 : -1) * Number(info.positionEvaluation);
                 setLocalEval({ cp, bestLine: info.pv, depth: info.depth });
                 try {
@@ -283,10 +286,10 @@ export default function AnalysisPage() {
             const idx = moveIndex === 0 ? 0 : moveIndex - 1;
             // backend analysis[] for best move arrow
             const bm = backendData?.analysis?.[idx]?.bestMove;
-            if (bm?.length === 4) arr.push({ fromSquare: bm.slice(0,2), toSquare: bm.slice(2,4), color: "rgba(0,200,0,0.7)" });
+            if (bm?.length === 4) arr.push([bm.slice(0,2), bm.slice(2,4), "rgba(0,200,0,0.7)"]);
         }
         const tok = localEval.bestLine?.split(" ");
-        if (tok?.[0]?.length === 4) arr.push({ fromSquare: tok[0].slice(0,2), toSquare: tok[0].slice(2,4), color: "rgba(255,140,0,0.7)" });
+        if (tok?.[0]?.length === 4) arr.push([tok[0].slice(0,2), tok[0].slice(2,4), "rgba(255,140,0,0.7)"]);
         return arr;
     }, [backendData, streamMoves, moveIndex, localEval.bestLine]);
 

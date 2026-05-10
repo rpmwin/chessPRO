@@ -9,7 +9,7 @@ import { useInView } from "react-intersection-observer";
 import {
     ExternalLink,
     Loader2,
-    CastleIcon as ChessKnight,
+    Castle as ChessKnight,
     Clock,
     Calendar,
     Trophy,
@@ -28,6 +28,7 @@ export default function GamesPage() {
     const [allLoaded, setAllLoaded] = useState(false);
     const [visibleCount, setVisibleCount] = useState(30); // start by showing 30 games
 
+    const loadingRef = useRef(false);
     const boardRef = useRef(null);
     const [boardWidth, setBoardWidth] = useState(300);
 
@@ -120,7 +121,8 @@ export default function GamesPage() {
 
     // load next archive’s games
     const loadNext = useCallback(async () => {
-        if (loadingArchive || idxRef.current >= archives.length) return;
+        if (loadingRef.current || idxRef.current >= archives.length) return;
+        loadingRef.current = true;
         setLoadingArchive(true);
         const url = archives[idxRef.current++];
         try {
@@ -135,9 +137,10 @@ export default function GamesPage() {
         } catch {
             toast.error("Failed to load games");
         } finally {
+            loadingRef.current = false;
             setLoadingArchive(false);
         }
-    }, [archives, username, loadingArchive]);
+    }, [archives, username]);
 
     // trigger load when sentinel visible
     useEffect(() => {
