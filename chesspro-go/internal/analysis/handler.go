@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/hibiken/asynq"
 	"github.com/iamrpm/chesspro-go/internal/auth"
+	"github.com/iamrpm/chesspro-go/internal/metrics"
 )
 
 type Handler struct {
@@ -168,10 +169,18 @@ func (h *Handler) Stream(w http.ResponseWriter, r *http.Request) {
 
 	flusher, canFlush := w.(http.Flusher)
 
+	metrics.ActiveStreams.Inc()
+	defer metrics.ActiveStreams.Dec()
+
+	start := time.Now()
 	ch := make(chan ProgressEvent, 64)
 	go h.worker.AnalyzeStream(r.Context(), body.PGN, ch)
 
+	outcome := "success"
 	for event := range ch {
+		if event.Type == "error" {
+			outcome = "error"
+		}
 		data, err := json.Marshal(event)
 		if err != nil {
 			continue
@@ -181,6 +190,8 @@ func (h *Handler) Stream(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
+	metrics.AnalysisJobsTotal.WithLabelValues(outcome).Inc()
+	metrics.AnalysisDuration.Observe(time.Since(start).Seconds())
 }
 
 func mustTask(analysisID string) *asynq.Task {

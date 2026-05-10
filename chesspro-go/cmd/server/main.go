@@ -19,6 +19,7 @@ import (
 	"github.com/iamrpm/chesspro-go/internal/config"
 	"github.com/iamrpm/chesspro-go/internal/db"
 	jwtpkg "github.com/iamrpm/chesspro-go/internal/jwt"
+	"github.com/iamrpm/chesspro-go/internal/metrics"
 	"github.com/iamrpm/chesspro-go/internal/user"
 )
 
@@ -59,9 +60,9 @@ func main() {
 	sf := analysis.NewStockfish(cfg.StockfishPath)
 
 	// Analysis
-	analysisSvc := analysis.NewService(analysisRepo, asynqClient)
-	analysisHandler := analysis.NewHandler(analysisSvc, analysisRepo)
 	analysisWorker := analysis.NewWorker(analysisRepo, sf, geminiClient)
+	analysisSvc := analysis.NewService(analysisRepo, asynqClient)
+	analysisHandler := analysis.NewHandler(analysisSvc, analysisRepo, analysisWorker)
 
 	// Asynq worker server
 	asynqSrv := asynq.NewServer(
@@ -81,10 +82,12 @@ func main() {
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.Recoverer)
 	r.Use(corsMiddleware(cfg.CORSOrigin))
+	r.Use(metrics.Middleware)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "chesspro-go is running")
 	})
+	r.Get("/metrics", metrics.Handler().ServeHTTP)
 
 	authHandler.Mount(r, authMw)
 	chesscomHandler.Mount(r)
@@ -101,11 +104,10 @@ func main() {
 		Addr:         ":" + cfg.Port,
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 120 * time.Second, // long for analysis endpoint
+		WriteTimeout: 120 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
