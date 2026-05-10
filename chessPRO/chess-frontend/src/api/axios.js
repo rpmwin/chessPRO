@@ -1,10 +1,8 @@
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
-
 const api = axios.create({
-    baseURL: BASE,
+    baseURL: "http://localhost:8080",
     withCredentials: true,
 });
 
@@ -46,7 +44,7 @@ api.interceptors.response.use(
         config._retry = true;
         try {
             const { data } = await axios.get(
-                `${BASE}/auth/refresh`,
+                "http://localhost:8080/auth/refresh",
                 { withCredentials: true }
             );
             const newToken = data.access_token;

@@ -35,11 +35,11 @@ export const AuthProvider = ({ children }) => {
             });
     }, []);
 
-    const signup = async ({ email, password, name, username }) => {
+    const signup = async ({ email, password, name }) => {
         const { data } = await api.post("/auth/signup", {
             email,
             password,
-            name: name || username, // Signup form uses "username" field for the display name
+            name,
         });
         localStorage.setItem("accessToken", data.access_token);
         setUser(data.user);

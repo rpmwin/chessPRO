@@ -8,15 +8,15 @@ import { Engine } from "../Engine";
 import { EvaluationBar } from "../components/EvaluationBar";
 import { toast } from "react-hot-toast";
 import {
-    ChevronLeft, ChevronRight, ArrowLeft, Castle as ChessKnight,
+    ChevronLeft, ChevronRight, ArrowLeft, CastleIcon as ChessKnight,
     Lightbulb, BarChart3, Code, Clock, FastForward, Rewind, Info,
-    Maximize2, Minimize2, Cpu, Brain, RefreshCw, Crown as ChessKing,
-    Church as ChessBishop, Diamond as ChessQueen,
-    Piano as ChessPawn, Rocket as ChessRook, Route, ExternalLink, Zap, TrendingUp, Award,
+    Maximize2, Minimize2, Cpu, Brain, RefreshCw, RocketIcon as ChessRook,
+    ChurchIcon as ChessBishop, CastleIcon as ChessKing, DiamondIcon as ChessQueen,
+    PianoIcon as ChessPawn, Route, ExternalLink, Zap, TrendingUp, Award,
     Target, BookOpen, AlertTriangle
 } from "lucide-react";
 
-const BACKEND = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+const BACKEND = "http://localhost:8080";
 
 // Classification styles
 const CLASSIFICATION_STYLE = {
@@ -120,8 +120,6 @@ export default function AnalysisPage() {
     });
     const [parsedBestLine, setParsedBestLine] = useState([]);
     const streamRef = useRef(null);
-    const activeRowRef = useRef(null);
-    const engineDepthRef = useRef(0);
 
     // parse PGN → move history + game info
     useEffect(() => {
@@ -146,30 +144,27 @@ export default function AnalysisPage() {
         }
     }, [pgn, game]);
 
-    // local engine analysis — only update state when depth strictly increases to avoid thrashing
+    // local engine analysis
     useEffect(() => {
         engine.stop();
-        engineDepthRef.current = 0;
-        setLocalEval({ cp: 0, bestLine: "", depth: 0 });
+        setLocalEval({ cp: 0, bestLine: "Analyzing…", depth: 0 });
         setParsedBestLine([]);
-        engine.evaluatePosition(position, 18);
+        engine.evaluatePosition(position, 12);
         engine.onMessage((info) => {
-            if (!info.depth || info.depth <= engineDepthRef.current) return;
-            engineDepthRef.current = info.depth;
-            const cp = (game.turn() === "w" ? 1 : -1) * Number(info.positionEvaluation || 0);
-            const pv = info.pv || "";
-            setLocalEval({ cp, bestLine: pv, depth: info.depth });
-            if (pv) {
+            if (info.depth >= 8) {
+                const cp = (game.turn() === "w" ? 1 : -1) * Number(info.positionEvaluation);
+                setLocalEval({ cp, bestLine: info.pv, depth: info.depth });
                 try {
                     const tmp = new Chess(position);
                     const parsed = [];
-                    for (const mv of pv.split(" ").slice(0, 5)) {
-                        if (!mv || mv.length < 4) break;
-                        try {
-                            const m = tmp.move({ from: mv.slice(0,2), to: mv.slice(2,4),
-                                promotion: mv.length === 5 ? mv[4] : undefined });
-                            if (m) parsed.push({ san: m.san, from: m.from, to: m.to, color: m.color });
-                        } catch { break; }
+                    for (const mv of (info.pv || "").split(" ").slice(0, 5)) {
+                        if (mv?.length >= 4) {
+                            try {
+                                const m = tmp.move({ from: mv.slice(0,2), to: mv.slice(2,4),
+                                    promotion: mv.length === 5 ? mv[4] : undefined });
+                                if (m) parsed.push({ san: m.san, from: m.from, to: m.to, color: m.color });
+                            } catch { break; }
+                        }
                     }
                     setParsedBestLine(parsed);
                 } catch {}
@@ -280,88 +275,34 @@ export default function AnalysisPage() {
         setPosition(game.fen());
     };
 
-    // Auto-scroll active move into view
-    useEffect(() => {
-        activeRowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }, [moveIndex]);
-
-    // Keyboard navigation: ← back, → forward, Home start, End end
-    useEffect(() => {
-        const handler = (e) => {
-            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-            if (e.key === "ArrowLeft")  { e.preventDefault(); back(); }
-            if (e.key === "ArrowRight") { e.preventDefault(); forward(); }
-            if (e.key === "Home")       { e.preventDefault(); jumpToStart(); }
-            if (e.key === "End")        { e.preventDefault(); jumpToEnd(); }
-        };
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-    }, [moveIndex, moveHistory]); // re-bind when these change so closures are fresh
-
-    // Board arrows:
-    // GREEN  — backend best move FROM current position: analysis[moveIndex].bestMove
-    //          analysis[] has N+1 entries; index 0 = startpos, index N = after N moves
-    //          so analysis[moveIndex] is ALWAYS the correct current position eval.
-    // RED    — the move that was actually played to reach here (from moveHistory),
-    //          shown only when it was a blunder or mistake so user sees "you played X, engine wanted Y"
-    // ORANGE — local engine's top move (real-time UCI from bestLine)
+    // Arrows
     const arrows = useMemo(() => {
         const arr = [];
-
-        // react-chessboard v4 customArrows format: [fromSquare, toSquare, color]
-        const pushUCI = (uci, color) => {
-            if (!uci || uci.length < 4) return;
-            arr.push([uci.slice(0, 2), uci.slice(2, 4), color]);
-        };
-
-        // GREEN: engine suggestion from current position
-        const bestMove = backendData?.analysis?.[moveIndex]?.bestMove;
-        pushUCI(bestMove, "rgba(0,200,0,0.8)");
-
-        // RED: played move when it was a blunder/mistake — moveHistory[moveIndex-1] has .from/.to
-        if (moveIndex > 0) {
-            const lastMove = moveHistory[moveIndex - 1]; // chess.js verbose move: { from, to, ... }
-            const lastMoveData = backendData?.moves?.[moveIndex - 1] ?? streamMoves[moveIndex - 1] ?? null;
-            const isBad = lastMoveData?.classification === "blunder" || lastMoveData?.classification === "mistake";
-            if (isBad && lastMove?.from && lastMove?.to) {
-                const playedUCI = lastMove.from + lastMove.to + (lastMove.promotion || "");
-                // Only show red arrow if it differs from the green (engine) arrow
-                if (playedUCI !== bestMove) {
-                    pushUCI(playedUCI, "rgba(220,50,50,0.75)");
-                }
-            }
+        const src = backendData || (streamMoves.length > 0 ? { analysis: null, moves: streamMoves } : null);
+        if (src) {
+            const idx = moveIndex === 0 ? 0 : moveIndex - 1;
+            // backend analysis[] for best move arrow
+            const bm = backendData?.analysis?.[idx]?.bestMove;
+            if (bm?.length === 4) arr.push({ fromSquare: bm.slice(0,2), toSquare: bm.slice(2,4), color: "rgba(0,200,0,0.7)" });
         }
-
-        // ORANGE: local engine real-time suggestion
-        const localFirst = localEval.bestLine?.split(" ")?.[0];
-        pushUCI(localFirst, "rgba(255,140,0,0.65)");
-
+        const tok = localEval.bestLine?.split(" ");
+        if (tok?.[0]?.length === 4) arr.push({ fromSquare: tok[0].slice(0,2), toSquare: tok[0].slice(2,4), color: "rgba(255,140,0,0.7)" });
         return arr;
-    }, [backendData, streamMoves, moveIndex, moveHistory, localEval.bestLine]);
+    }, [backendData, streamMoves, moveIndex, localEval.bestLine]);
 
-    // Current move data — the move that reached the current position (1-based moveIndex → 0-based array)
+    // Current move data
     const currentMoveData = useMemo(() => {
         if (moveIndex === 0) return null;
         return backendData?.moves?.[moveIndex - 1] ?? streamMoves[moveIndex - 1] ?? null;
     }, [backendData, streamMoves, moveIndex]);
 
-    // Last-move square highlights (from/to squares of the move that got us here)
-    const lastMoveHighlight = useMemo(() => {
-        if (moveIndex === 0) return {};
-        const mv = moveHistory[moveIndex - 1];
-        if (!mv) return {};
-        const color = "rgba(100,200,100,0.3)";
-        return { [mv.from]: { backgroundColor: color }, [mv.to]: { backgroundColor: color } };
-    }, [moveIndex, moveHistory]);
-
     const currentComment = useMemo(() => {
         if (moveIndex === 0) return "Navigate moves to see analysis tips.";
         if (backendData) return backendData.commentary?.[moveIndex - 1]?.comment || "No tip for this move.";
-        // streamComments is keyed by moveNumber (1-based), moveIndex IS the 1-based move number
         const streaming = streamComments[moveIndex];
         if (streaming) return streaming;
         if (analysisState === "streaming") return "Analyzing…";
-        return `Local engine: ${localEval.bestLine?.split(" ").slice(0,3).join(" ") || "Calculating..."}`;
+        return `Local: ${localEval.bestLine?.split(" ").slice(0,3).join(" ") || "Calculating..."}`;
     }, [moveIndex, backendData, streamComments, analysisState, localEval.bestLine]);
 
     const currentEval = useMemo(() => {
@@ -599,9 +540,7 @@ export default function AnalysisPage() {
                                         boardOrientation={boardOrientation}
                                         customDarkSquareStyle={{ backgroundColor: "#3a506b" }}
                                         customLightSquareStyle={{ backgroundColor: "#d6e5e3" }}
-                                        customSquareStyles={lastMoveHighlight}
                                         boardStyle={{ borderRadius: "0.5rem" }}
-                                        areArrowsAllowed={false}
                                     />
                                 </div>
                             </div>
@@ -773,9 +712,8 @@ export default function AnalysisPage() {
                                             const wComment = backendData?.commentary?.[row*2]?.comment ?? streamComments[row*2+1];
                                             const bComment = backendData?.commentary?.[row*2+1]?.comment ?? streamComments[row*2+2];
 
-                                            const isActiveRow = isActiveW || isActiveB;
                                             return (
-                                                <tr key={row} ref={isActiveRow ? activeRowRef : null} className="border-b border-gray-700/50 hover:bg-gray-700/20 transition-colors">
+                                                <tr key={row} className="border-b border-gray-700/50 hover:bg-gray-700/20 transition-colors">
                                                     <td className="p-2 text-gray-500 font-mono text-xs">{row + 1}.</td>
                                                     <td onClick={() => w && jumpTo(row * 2 + 1)}
                                                         className={`p-2 ${w ? "cursor-pointer" : "text-gray-600"} ${isActiveW ? "bg-teal-500/20 rounded" : ""}`}>

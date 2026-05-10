@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
     ChevronRight,
     Eye,
@@ -9,15 +9,14 @@ import {
     Lock,
     Key,
     Mail,
-    Castle as ChessKnight,
-    Rocket as ChessRook,
+    CastleIcon as ChessKnight,
+    RocketIcon as ChessRook,
     Loader2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Signup() {
     const { signup } = useAuth();
-    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         username: "",
@@ -77,11 +76,10 @@ export default function Signup() {
         setIsSubmitting(true);
         try {
             await signup(formData);
-            navigate("/", { replace: true });
         } catch (err) {
             setErrors((prev) => ({
                 ...prev,
-                form: err?.response?.data?.error || "Signup failed. Please try again.",
+                form: "Signup failed. Please try again.",
             }));
         } finally {
             setIsSubmitting(false);

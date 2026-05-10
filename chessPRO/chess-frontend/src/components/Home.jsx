@@ -3,16 +3,16 @@ import { Link } from "react-router-dom";
 import {
     Menu,
     X,
-    Castle as ChessKnight,
+    CastleIcon as ChessKnight,
     Search,
     History,
     Zap,
     Brain,
-    Rocket as ChessRook,
-    Church as ChessBishop,
-    Crown as ChessKing,
-    Diamond as ChessQueen,
-    Piano as ChessPawn,
+    RocketIcon as ChessRook,
+    ChurchIcon as ChessBishop,
+    CastleIcon as ChessKing,
+    DiamondIcon as ChessQueen,
+    PianoIcon as ChessPawn,
 } from "lucide-react";
 
 export default function Home() {

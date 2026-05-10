@@ -16,7 +16,7 @@ import {
     Zap,
     Loader2,
 } from "lucide-react";
-import userImg from "../assets/user.svg";
+import userImg from "./user.svg";
 
 export default function ProfilePage() {
     const { username } = useParams();

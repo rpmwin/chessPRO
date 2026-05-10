@@ -7,8 +7,7 @@ export const EvaluationBar = ({ cp }) => {
     });
 
     useEffect(() => {
-        const raw = cp ?? 0;
-        const clampedCP = Math.max(-1000, Math.min(1000, raw));
+        const clampedCP = Math.max(-1000, Math.min(1000, cp));
         const whiteHeight = 50 + clampedCP / 20;
         setBarStyles({
             whiteHeight: `${whiteHeight}%`,
@@ -50,7 +49,7 @@ export const EvaluationBar = ({ cp }) => {
                 />
             </div>
             <div style={{ textAlign: "center", color: "white", marginTop: 8 }}>
-                {cp != null ? (cp / 100).toFixed(2) : "0.00"}
+                {(cp / 100).toFixed(2)}
             </div>
         </div>
     );
