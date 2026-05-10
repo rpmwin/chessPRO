@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Read(//Users/iamrpm/.claude/plugins/**)",
+      "Read(//Users/iamrpm/.claude/skills/**)",
+      "Bash(bunx skills *)"
+    ]
+  }
+}
