@@ -6,8 +6,14 @@ metadata:
   labels:
     {{- include "chesspro.labels" . | nindent 4 }}
   annotations:
-    # Route /api/* → backend, everything else → frontend
     traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Required for SSE streaming (/analysis/stream) — disables response buffering
+    traefik.ingress.kubernetes.io/buffering: |
+      maxRequestBodyBytes = 0
+      memRequestBodyBytes = 0
+      maxResponseBodyBytes = 0
+      memResponseBodyBytes = 0
+      retryExpression = ""
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
@@ -35,7 +41,14 @@ spec:
                 name: {{ include "chesspro.backend.fullname" . }}
                 port:
                   number: {{ .Values.backend.port }}
-          - path: /metrics
+          - path: /chesscom
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "chesspro.backend.fullname" . }}
+                port:
+                  number: {{ .Values.backend.port }}
+          - path: /health
             pathType: Prefix
             backend:
               service:

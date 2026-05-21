@@ -6,10 +6,12 @@ metadata:
     {{- include "chesspro.labels" . | nindent 4 }}
     app.kubernetes.io/component: frontend
 spec:
+  type: NodePort
   selector:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/component: frontend
   ports:
     - port: 80
       targetPort: {{ .Values.frontend.port }}
+      nodePort: {{ .Values.frontend.nodePort }}
       name: http

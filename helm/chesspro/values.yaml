@@ -10,6 +10,7 @@ backend:
     pullPolicy: Always
   replicas: 1
   port: 8080
+  nodePort: 30080
   resources:
     requests:
       cpu: 250m
@@ -34,6 +35,7 @@ frontend:
     pullPolicy: Always
   replicas: 1
   port: 80
+  nodePort: 30000
   resources:
     requests:
       cpu: 50m
@@ -43,8 +45,8 @@ frontend:
       memory: 128Mi
 
 ingress:
-  enabled: true
-  className: traefik   # k3s default ingress controller
+  enabled: false
+  className: traefik
   host: chesspro.local
   tls: false
 
