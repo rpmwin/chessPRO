@@ -11,6 +11,10 @@ chessPRO/chess-frontend/node_modules/
 # Go
 chesspro-go/server/
 
+# Helm downloaded dependencies (generated, not committed)
+helm/chesspro/charts/
+helm/chesspro/Chart.lock
+
 # kubeconfig
 *.kubeconfig
 kubeconfig

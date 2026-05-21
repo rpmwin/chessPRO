@@ -28,6 +28,8 @@ spec:
           ports:
             - containerPort: {{ .Values.backend.port }}
           envFrom:
+            - configMapRef:
+                name: {{ include "chesspro.backend.fullname" . }}-config
             - secretRef:
                 name: {{ include "chesspro.backend.fullname" . }}-secret
           env:
@@ -37,13 +39,13 @@ spec:
             {{- end }}
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: {{ .Values.backend.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: {{ .Values.backend.port }}
             initialDelaySeconds: 15
             periodSeconds: 20

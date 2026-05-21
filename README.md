@@ -2,6 +2,26 @@
 
 Real-time chess analysis platform. Upload or paste a PGN, get move-by-move Stockfish evaluation streamed live with Gemini AI coaching tips, accuracy scores, and an eval chart.
 
+## Architecture
+
+```
+Browser
+  │
+  ▼
+Next.js Frontend (Nginx, port 80)
+  │  REST + SSE
+  ▼
+Go Backend (chi, port 8080)
+  ├── PostgreSQL  (game history, users, analyses)
+  ├── Redis       (asynq job queue)
+  ├── Stockfish   (UCI subprocess, parallel workers)
+  ├── Gemini AI   (coaching commentary, streamed)
+  └── /metrics ──► Prometheus ──► Grafana
+```
+
+Deployed on k3s (single-node homelab) via Helm + ArgoCD.
+CI: GitHub Actions → Trivy scan → GHCR push → ArgoCD auto-sync.
+
 ## Stack
 
 | Layer | Tech |
@@ -78,12 +98,29 @@ npm run dev
 # → http://localhost:5173
 ```
 
+## CI/CD
+
+Push to `main` triggers:
+
+1. **test-backend** — `go build`, `go vet`, unit tests
+2. **build-backend** — multi-stage Docker build → push to GHCR → **Trivy CRITICAL/HIGH scan** → SARIF uploaded to GitHub Security tab
+3. **build-frontend** — `npm ci`, lint → Docker build → push to GHCR → Trivy scan
+4. **deploy** — `helm upgrade --install` to k3s via kubeconfig secret
+
+ArgoCD also watches `helm/chesspro/` and self-heals any drift.
+
 ## Production Deploy (k3s)
 
-Images are built and pushed to GHCR on every push to `main` via GitHub Actions.
+### ArgoCD (recommended)
 
 ```bash
-# Manual deploy / first time
+# one-time bootstrap — ArgoCD then manages all future deploys
+kubectl apply -f argocd-app.yaml
+```
+
+### Manual Helm
+
+```bash
 helm upgrade --install chesspro ./helm/chesspro \
   --namespace chesspro --create-namespace \
   --set backend.env.DATABASE_URL="..." \
@@ -134,7 +171,14 @@ GET  /analysis/:id          fetch stored result
 
 ## Monitoring
 
-Prometheus scrapes `/metrics` every 15s. Grafana auto-provisions the datasource.
+Prometheus scrapes `/metrics` every 15s. Grafana auto-provisions the datasource and the ChessPRO dashboard (`infra/grafana/provisioning/dashboards/chesspro.json`).
+
+Dashboard panels:
+- Active analysis streams
+- HTTP request rate + P95 latency
+- Analysis job success/error rate + P95 duration
+- Error rate (5xx)
+- Backend pod CPU + memory
 
 Key metrics:
 - `chesspro_http_requests_total` — request count by method/path/status

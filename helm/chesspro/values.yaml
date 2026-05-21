@@ -1,3 +1,8 @@
+config:
+  port: "8080"
+  appEnv: production
+  stockfishPath: /usr/bin/stockfish
+
 backend:
   image:
     repository: ghcr.io/iamrpm/chesspro-go
@@ -13,12 +18,7 @@ backend:
       cpu: 1000m
       memory: 512Mi
   env:
-    PORT: "8080"
-    APP_ENV: production
-    STOCKFISH_PATH: /usr/bin/stockfish
-    REDIS_ADDR: ""        # set via --set or secret
-    DATABASE_URL: ""      # set via secret
-    JWT_ACCESS_SECRET: "" # set via secret
+    JWT_ACCESS_SECRET: "" # set via --set
     JWT_REFRESH_SECRET: ""
     GEMINI_API_KEY: ""
     GOOGLE_CLIENT_ID: ""
@@ -47,6 +47,34 @@ ingress:
   className: traefik   # k3s default ingress controller
   host: chesspro.local
   tls: false
+
+postgresql:
+  auth:
+    username: chess
+    password: ""   # set via --set postgresql.auth.password=...
+    database: chesspro
+  primary:
+    persistence:
+      size: 2Gi
+
+redis:
+  auth:
+    enabled: false
+  architecture: standalone
+  master:
+    persistence:
+      size: 1Gi
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 30s
 
 serviceAccount:
   create: false

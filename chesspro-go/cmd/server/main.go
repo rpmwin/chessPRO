@@ -87,6 +87,9 @@ func main() {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "chesspro-go is running")
 	})
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	r.Get("/metrics", metrics.Handler().ServeHTTP)
 
 	authHandler.Mount(r, authMw)
