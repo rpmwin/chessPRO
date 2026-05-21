@@ -18,10 +18,9 @@ func TestGeminiGetCommentary(t *testing.T) {
 		t.Fatalf("NewGeminiClient: %v", err)
 	}
 
-	eval1, eval2 := 30, -50
-	moves := []MoveResult{
-		{MoveNumber: 1, PlayedMove: "e4", Eval: &eval1, BestMove: "e4", Depth: 10},
-		{MoveNumber: 2, PlayedMove: "e5", Eval: &eval2, BestMove: "e5", Depth: 10},
+	moves := []GeminiInput{
+		{MoveNumber: 1, PlayedMove: "e4", BestMove: "e4", CentipawnLoss: 0, Classification: ClassBest, IsBestMove: true},
+		{MoveNumber: 2, PlayedMove: "e5", BestMove: "e5", CentipawnLoss: 20, Classification: ClassGood, IsBestMove: false},
 	}
 
 	comments, err := client.GetCommentary(ctx, moves)
